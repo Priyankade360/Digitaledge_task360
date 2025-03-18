@@ -1,0 +1,23 @@
+body {
+  margin: 0;
+  /* overflow: hidden; */
+  /* overflow-y: hidden; */
+  overflow-x: hidden;
+}
+
+:root {
+  --primary: #e74c3c;
+  --background: #000000;
+  --text-color: #898989;
+  --col-white: #ffffff;
+}
+
+p {
+  margin: 0;
+}
+h1 {
+  margin: 0;
+}
+h2 {
+  margin: 0;
+}
