@@ -122,6 +122,9 @@ const Navbar = ({
   const [isprofileOpen, setIsprofileOpen] = useState(false);
 
   const [activeItem, setActiveItem] = useState(null);
+
+  const dmListRef = useRef(null);
+
   // Define state in Navbar
   const openChat = (user) => {
     setSelectedChat(user);
@@ -296,6 +299,9 @@ const Navbar = ({
   // Close search on outside click (specific to each section)
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (dmListRef.current && !dmListRef.current.contains(event.target)) {
+        setSelectedChat(null);
+      }
       if (projectsRef.current && !projectsRef.current.contains(event.target)) {
         setIsProEditing(false);
       }
@@ -438,7 +444,11 @@ const Navbar = ({
           {/* ✅ Message List and More Section Visible Only When isMessageOpen is True */}
           {isMessageOpen && (
             <>
-              <ul className="direct-message-list" onClick={onchatClick}>
+              <ul
+                className="direct-message-list"
+                ref={dmListRef}
+                onClick={onchatClick}
+              >
                 {directMessages.map((user, index) => (
                   <li
                     key={index}
@@ -446,8 +456,8 @@ const Navbar = ({
                       selectedChat?.name === user.name ? "active-chat" : ""
                     }`}
                     onClick={() => {
-                      handleactiveClick(user.name);
-                      console.log("User selected:", user);
+                      handleactiveClick(user.name); // Update active user
+                      setSelectedChat(user); // Store selected user in state
                       navigate(`/ChatBoard/`);
                     }}
                   >
