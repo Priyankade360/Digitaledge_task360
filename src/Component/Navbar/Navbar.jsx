@@ -34,8 +34,19 @@ import profilenameArrow from "../../assets/profile-add.png";
 import { useNavigate } from "react-router-dom";
 
 const initialUsers = [
-  { name: "Abhijeet Das", avatar: avijeet, status: "online", unread: true },
-  { name: "Jayanta Mahato", avatar: jayanta, status: "online", unread: true },
+  {
+    name: "Priyanka Roy",
+    avatar: sucharita,
+    status: "online",
+    unread: true,
+  },
+  {
+    name: "Rahul Sharma",
+    avatar: avijeet,
+    status: "online",
+    unread: false,
+  },
+
   {
     name: "Sucharita Paul",
     avatar: sucharita,
@@ -185,14 +196,14 @@ const Navbar = ({
         //   unread: false,
         // },
         {
-          name: "Rahul Sharma",
+          name: "Abhijeet Das",
           avatar: avijeet,
           status: "online",
-          unread: false,
+          unread: true,
         },
         {
-          name: "Priyanka Roy",
-          avatar: sucharita,
+          name: "Jayanta Mahato",
+          avatar: jayanta,
           status: "online",
           unread: true,
         },
