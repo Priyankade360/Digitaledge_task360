@@ -78,11 +78,6 @@ const Navbar = ({
   onchatClick,
   onScreenSelect,
 }) => {
-  //     <Navbar
-  //     onTaskClick={() => navigate("/task")}
-  //     onProjectClick={() => navigate("/project")}
-  //     onchatClick={() => navigate("/ChatBoard")}
-  //   />
   // Toggle states for each section
   const navigate = useNavigate();
   const [isMessageOpen, setIsMessageOpen] = useState(true);
@@ -90,14 +85,25 @@ const Navbar = ({
   const [isTeamsOpen, setIsTeamsOpen] = useState(true);
   const [isChannelsOpen, setIsChannelsOpen] = useState(true);
 
-  const [isEditing, setIsEditing] = useState(false);
+  const projectsRef = useRef(null);
+  const teamsRef = useRef(null);
+  const channelsRef = useRef(null);
+
   const [isProEditing, setIsProEditing] = useState(false);
   const [isTeamEditing, setIsTeamEditing] = useState(false);
+  // const [isEditing, setIsEditing] = useState(false);
 
+  // const [isProjectsOpen, setIsProjectsOpen] = useState(false);
+  // const [isTeamsOpen, setIsTeamsOpen] = useState(false);
+  // const [isChannelsOpen, setIsChannelsOpen] = useState(false);
+  const searchRef = useRef(null);
   const inputRef = useRef(null);
   const inputproRef = useRef(null);
   const inputteamRef = useRef(null);
 
+  const [isChannelEditing, setIsChannelEditing] = useState(false);
+  const [channelSearchQuery, setChannelSearchQuery] = useState("");
+  const inputChannelRef = useRef(null);
   // State variables for dynamic lists
   const [directMessages, setDirectMessages] = useState(initialUsers);
   const [projects, setProjects] = useState(initialProjects);
@@ -169,10 +175,16 @@ const Navbar = ({
     closeOtherSections("messages");
     if (!showAll) {
       const moreUsers = [
+        // {
+        //   name: "Rahul Sharma",
+        //   avatar: avijeet,
+        //   status: "offline",
+        //   unread: false,
+        // },
         {
           name: "Rahul Sharma",
           avatar: avijeet,
-          status: "offline",
+          status: "online",
           unread: false,
         },
         {
@@ -281,17 +293,29 @@ const Navbar = ({
     setIsprofileOpen((prev) => !prev);
   };
 
+  // Close search on outside click (specific to each section)
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (inputRef.current && !inputRef.current.contains(event.target)) {
-        setIsEditing(false);
+      if (projectsRef.current && !projectsRef.current.contains(event.target)) {
+        setIsProEditing(false);
+      }
+      if (teamsRef.current && !teamsRef.current.contains(event.target)) {
+        setIsTeamEditing(false);
+      }
+      if (channelsRef.current && !channelsRef.current.contains(event.target)) {
+        setIsChannelEditing(false);
+      }
+      // Close Direct Messages search when clicking outside
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setIsSearching(false);
       }
     };
-    if (isEditing) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isEditing]);
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [projectsRef, teamsRef, channelsRef, searchRef]);
 
   // Filter projects based on search input
   const filteredProjects = projects.filter(
@@ -340,55 +364,68 @@ const Navbar = ({
           <span className="unread-text">Unread</span>
         </div>
         {/* Direct Message Section */}
-        <div className="direct-message-section">
+        <div className="direct-message-section" ref={searchRef}>
+          {/* Header Section */}
           <div
             className="header-section"
             onClick={(e) => {
-              if (!e.target.closest(".search-box")) {
-                handleToggleMessage();
+              // ✅ Trigger search mode when clicking anywhere in the header except down-arrow & add button
+              if (
+                !e.target.closest(".down-arrow") &&
+                !e.target.closest(".direct-message-add-button")
+              ) {
+                setIsSearching(true);
               }
             }}
           >
-            {!isSearching ? (
-              <>
-                <span className="down-arrow">
-                  <img
-                    src={isMessageOpen ? openArrowIcon : closedArrowIcon}
-                    alt="Toggle Icon"
-                  />
-                </span>
-                <span className="text-section">Direct Message</span>
-              </>
-            ) : (
-              <div className="search-box">
-                <input
-                  type="text"
-                  className="search-input"
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  // onKeyDown={handleSearchComplete}
-                  autoFocus
-                />
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSearchClick(); // Perform search
-                    setIsSearching(false); // Immediately close search bar
-                  }}
-                  className="search-button"
-                >
-                  <img src={add1} alt="Search" />
-                </button>
-              </div>
-            )}
+            <div
+              className="down-arrow"
+              onClick={(e) => {
+                e.stopPropagation(); // ✅ Prevents affecting entire header
+                setIsMessageOpen((prev) => !prev);
+              }}
+            >
+              <img
+                src={isMessageOpen ? openArrowIcon : closedArrowIcon}
+                alt="Toggle Icon"
+              />
+            </div>
 
+            {/* Click "Direct Message" → Turns into a Search Input */}
+            <div className="search-wrapper">
+              {!isSearching ? (
+                <div className="text-section">Direct Message</div>
+              ) : (
+                <div className="search-box">
+                  <input
+                    type="text"
+                    className="search-input"
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    autoFocus
+                  />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSearchClick(); // Perform search
+                      setIsSearching(false); // Close search bar
+                    }}
+                    className="search-button"
+                  >
+                    <img src={add1} alt="Search" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Add Direct Message Button */}
             {!isSearching && (
               <div className="direct-message-add-button">
                 <button
                   onClick={(e) => {
-                    e.stopPropagation(); // Ensure message list stays open
-                    setIsSearching(true); // Open search bar
+                    e.stopPropagation();
+                    setIsSearching(true);
                   }}
                   className="tooltip-button"
                 >
@@ -398,58 +435,83 @@ const Navbar = ({
             )}
           </div>
 
+          {/* ✅ Message List and More Section Visible Only When isMessageOpen is True */}
           {isMessageOpen && (
-            <ul className="direct-message-list" onClick={onchatClick}>
-              {directMessages.map((user, index) => (
-                <li
-                  key={index}
-                  className={`direct-message-item ${
-                    selectedChat?.name === user.name ? "active-chat" : ""
-                  }`}
-                  onClick={() => {
-                    handleactiveClick(user.name);
-                    console.log("User selected:", user);
-                    navigate(`/ChatBoard/`);
-                    // openChat(user); // Set the selected user
-                    // onScreenSelect("ChatBoard", user); // Switch to ChatBoard screen
+            <>
+              <ul className="direct-message-list" onClick={onchatClick}>
+                {directMessages.map((user, index) => (
+                  <li
+                    key={index}
+                    className={`direct-message-item ${
+                      selectedChat?.name === user.name ? "active-chat" : ""
+                    }`}
+                    onClick={() => {
+                      handleactiveClick(user.name);
+                      console.log("User selected:", user);
+                      navigate(`/ChatBoard/`);
+                    }}
+                  >
+                    <img
+                      src={user.avatar}
+                      alt={`${user.name}'s avatar`}
+                      className="user-avatar"
+                    />
+                    <span className="user-name">{user.name}</span>
+                    {user.status === "online" && (
+                      <span className="status-dot"></span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+
+              {/* ✅ More Section (Hides when Arrow is Clicked) */}
+              <div className="more-section">
+                <a
+                  href="#more-conversation"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowAll((prev) => !prev);
+                    loadMoreConversations();
                   }}
                 >
-                  <img
-                    src={user.avatar}
-                    alt={`${user.name}'s avatar`}
-                    className="user-avatar"
-                  />
-                  <span className="user-name">{user.name}</span>
-                  {user.status === "online" && (
-                    <span className="status-dot"></span>
-                  )}
-                </li>
-              ))}
-            </ul>
+                  {!showAll ? "More" : "Less"}
+                </a>
+              </div>
+            </>
           )}
-          <div className="more-section">
-            <a href="#more-conversation" onClick={loadMoreConversations}>
-              {!showAll ? "More" : "Less "}
-            </a>
-          </div>
         </div>
 
         {/* Projects Section */}
-        <div className="projects-section">
+        <div className="projects-section" ref={projectsRef}>
           {/* Header Section */}
-          <div className="header-section">
+          <div
+            className="header-section"
+            onClick={(e) => {
+              if (
+                !e.target.closest(".down-arrow") &&
+                !e.target.closest(".add-button")
+              ) {
+                setIsProEditing(true); // Enable search mode for projects
+                setIsTeamEditing(false); // Disable search for teams
+                setIsChannelEditing(false); // Disable search for channels
+              }
+            }}
+          >
             {/* Toggle List Only When Clicking the Arrow */}
-            <span
+            <div
               className="down-arrow"
-              onClick={() => setIsOpen((prev) => !prev)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsOpen((prev) => !prev);
+              }}
             >
               <img
                 src={isOpen ? openArrowIcon : closedArrowIcon}
                 alt="Toggle Icon"
               />
-            </span>
+            </div>
 
-            {/* Click "Projects" → Turn into a Search Input */}
+            {/* Click Anywhere in Header (Except Arrow/Add) to Search */}
             <div className="search-wrapper">
               {isProEditing ? (
                 <input
@@ -461,17 +523,12 @@ const Navbar = ({
                   onChange={(e) => setproSearchQuery(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
-                      setIsProEditing(false); // Exit search mode
+                      setIsProEditing(false);
                     }
                   }}
                 />
               ) : (
-                <span
-                  className="text-section"
-                  onClick={() => setIsProEditing(true)}
-                >
-                  Projects
-                </span>
+                <div className="text-section">Projects</div>
               )}
             </div>
 
@@ -483,63 +540,79 @@ const Navbar = ({
             </div>
           </div>
 
-          {/* ✅ Project List Always Visible (Toggles Only with Arrow) */}
+          {/* ✅ Projects List and More Section Visible Only When isOpen is True */}
           {isOpen && (
-            <ul className="projects-list" onClick={() => onSelect("projects")}>
-              {filteredProjects.map((project, index) => (
-                <li
-                  key={index}
-                  className={`project-item ${
-                    activeItem === project.name ? "active-project" : ""
-                  }`}
-                  onClick={() => {
-                    handleactiveClick(project.name); // Mark as active
-                    // onSelect("projects"); // Mark "Projects" as selected
-                    navigate(`/Project/`);
+            <>
+              <ul
+                className="projects-list"
+                onClick={() => onSelect("projects")}
+              >
+                {filteredProjects.map((project, index) => (
+                  <li
+                    key={index}
+                    className={`project-item ${
+                      activeItem === project.name ? "active-project" : ""
+                    }`}
+                    onClick={() => {
+                      handleactiveClick(project.name);
+                      navigate(`/Project/`);
+                    }}
+                  >
+                    <img
+                      src={project.icon}
+                      alt={`${project.name}'s logo`}
+                      className="profile-logo"
+                    />
+                    <span className="user-name">{project.name}</span>
+                  </li>
+                ))}
+              </ul>
+
+              {/* ✅ More Section (Hides when Arrow is Clicked) */}
+              <div className="more-section">
+                <a
+                  href="#more-projects"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowAllProjects((prev) => !prev);
+                    loadMoreProjects();
                   }}
                 >
-                  <img
-                    src={project.icon}
-                    alt={`${project.name}'s logo`}
-                    className="profile-logo"
-                  />
-                  <span className="user-name">{project.name}</span>
-                </li>
-              ))}
-            </ul>
+                  {!showAllProjects ? "More" : "Less"}
+                </a>
+              </div>
+            </>
           )}
-
-          {/* ✅ More/Less Toggle */}
-          <div className="more-section">
-            <a
-              href="#more-projects"
-              onClick={(e) => {
-                e.preventDefault();
-                setShowAllProjects((prev) => !prev);
-                loadMoreProjects();
-              }}
-            >
-              {!showAllProjects ? "More" : "Less"}
-            </a>
-          </div>
         </div>
 
         {/* Teams Section */}
-        <div className="teams-section">
-          {/* Header Section */}
-          <div className="header-section">
-            {/* Toggle List Only When Clicking the Arrow */}
-            <span
+        <div className="teams-section" ref={teamsRef}>
+          <div
+            className="header-section"
+            onClick={(e) => {
+              if (
+                !e.target.closest(".down-arrow") &&
+                !e.target.closest(".add-button")
+              ) {
+                setIsTeamEditing(true); // Enable search mode for teams
+                setIsProEditing(false); // Disable search for projects
+                setIsChannelEditing(false); // Disable search for channels
+              }
+            }}
+          >
+            <div
               className="down-arrow"
-              onClick={() => setIsTeamsOpen((prev) => !prev)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsTeamsOpen((prev) => !prev);
+              }}
             >
               <img
                 src={isTeamsOpen ? openArrowIcon : closedArrowIcon}
                 alt="Toggle Icon"
               />
-            </span>
+            </div>
 
-            {/* Click "Teams" → Turns into a Search Input */}
             <div className="search-wrapper">
               {isTeamEditing ? (
                 <input
@@ -550,22 +623,14 @@ const Navbar = ({
                   value={teamsearchQuery}
                   onChange={(e) => setTeamSearchQuery(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      setIsTeamEditing(false); // Exit search mode
-                    }
+                    if (e.key === "Enter") setIsTeamEditing(false);
                   }}
                 />
               ) : (
-                <span
-                  className="text-section"
-                  onClick={() => setIsTeamEditing(true)}
-                >
-                  Teams
-                </span>
+                <div className="text-section">Teams</div>
               )}
             </div>
 
-            {/* Add Team Button */}
             <div className="add-button">
               <button onClick={handleClick} className="teams-add-button">
                 <img src={plusIcon} alt="Add" />
@@ -573,17 +638,16 @@ const Navbar = ({
             </div>
           </div>
 
-          {/* ✅ Teams List Always Visible (Toggles Only with Arrow) */}
           {isTeamsOpen && (
             <ul className="teams-list">
               {filteredTeams.map((team, index) => (
                 <li
                   key={index}
                   className={`team-item ${
-                    activeItem === team.name ? "active-team" : ""
+                    activeItem === team.name ? "active-team" : " "
                   }`}
                   onClick={() => {
-                    handleactiveClick(team.name); // Mark as active
+                    handleactiveClick(team.name);
                     navigate(`/Teams/`);
                   }}
                 >
@@ -597,60 +661,62 @@ const Navbar = ({
               ))}
             </ul>
           )}
-
-          {/* ✅ More/Less Toggle */}
-          <div className="more-section">
-            <a
-              href="#more-teams"
-              onClick={(e) => {
-                e.preventDefault();
-                setShowAllTeams((prev) => !prev);
-                loadMoreTeams();
-              }}
-            >
-              {!showAllTeams ? "More" : "Less"}
-            </a>
-          </div>
         </div>
 
         {/* Channels Section */}
-        <div className="channels-section">
+        <div className="channels-section" ref={channelsRef}>
           {/* Header Section */}
-          <div className="header-section">
+          <div
+            className="header-section"
+            onClick={(e) => {
+              if (
+                !e.target.closest(".down-arrow") &&
+                !e.target.closest(".add-button")
+              ) {
+                setIsChannelEditing(true); // Enable search mode for channels
+                setIsProEditing(false); // Disable search for projects
+                setIsTeamEditing(false); // Disable search for teams
+              }
+            }}
+          >
             {/* Toggle List Only When Clicking the Arrow */}
-            <span
+            <div
               className="down-arrow"
-              onClick={() => setIsChannelsOpen((prev) => !prev)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsChannelsOpen((prev) => !prev);
+              }}
             >
               <img
                 src={isChannelsOpen ? openArrowIcon : closedArrowIcon}
                 alt="Toggle Icon"
               />
-            </span>
+            </div>
 
             {/* Click "Channels" → Turns into a Search Input */}
             <div className="search-wrapper">
-              {isEditing ? (
+              {isChannelEditing ? (
                 <input
                   type="text"
-                  ref={inputRef}
+                  ref={inputChannelRef}
                   className="search-input"
                   placeholder="Search channels..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  value={channelSearchQuery}
+                  onChange={(e) => setChannelSearchQuery(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
-                      setIsEditing(false); // Exit search mode
+                      setIsChannelEditing(false);
                     }
                   }}
+                  onBlur={() => setIsChannelEditing(false)} // Exit search mode when losing focus
                 />
               ) : (
-                <span
+                <div
                   className="text-section"
-                  onClick={() => setIsEditing(true)}
+                  onClick={() => setIsChannelEditing(true)}
                 >
                   Channels
-                </span>
+                </div>
               )}
             </div>
 
@@ -662,44 +728,46 @@ const Navbar = ({
             </div>
           </div>
 
-          {/* ✅ Channels List Always Visible (Toggles Only with Arrow) */}
+          {/* ✅ Channels List and More Section Visible Only When isChannelsOpen is True */}
           {isChannelsOpen && (
-            <ul className="channels-list">
-              {filteredChannels.map((channel, index) => (
-                <li
-                  key={index}
-                  className={`channel-item ${
-                    activeItem === channel.name ? "active-channel" : ""
-                  }`}
-                  onClick={() => {
-                    handleactiveClick(channel.name); // Mark as active
-                    navigate(`/Channels/`);
+            <>
+              <ul className="channels-list">
+                {filteredChannels.map((channel, index) => (
+                  <li
+                    key={index}
+                    className={`channel-item ${
+                      activeItem === channel.name ? "active-channel" : ""
+                    }`}
+                    onClick={() => {
+                      handleactiveClick(channel.name);
+                      navigate(`/Channels/`);
+                    }}
+                  >
+                    <img
+                      src={channel.locked ? lock : hash}
+                      alt=""
+                      className="channel-icon"
+                    />
+                    <span className="channel-name">{channel.name}</span>
+                  </li>
+                ))}
+              </ul>
+
+              {/* ✅ More Section (Hides when Arrow is Clicked) */}
+              <div className="more-section">
+                <a
+                  href="#more-channels"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowAllChannels((prev) => !prev);
+                    loadMoreChannels();
                   }}
                 >
-                  <img
-                    src={channel.locked ? lock : hash}
-                    alt=""
-                    className="channel-icon"
-                  />
-                  <span className="channel-name">{channel.name}</span>
-                </li>
-              ))}
-            </ul>
+                  {!showAllChannels ? "More" : "Less"}
+                </a>
+              </div>
+            </>
           )}
-
-          {/* ✅ More/Less Toggle */}
-          <div className="more-section">
-            <a
-              href="#more-channels"
-              onClick={(e) => {
-                e.preventDefault();
-                setShowAllChannels((prev) => !prev);
-                loadMoreChannels();
-              }}
-            >
-              {!showAllChannels ? "More" : "Less"}
-            </a>
-          </div>
         </div>
       </div>
 
